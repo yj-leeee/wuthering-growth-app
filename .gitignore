@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.expo/
+.env*
+!.env.example
+*.apk
+*.aab
+local.properties
