@@ -12,7 +12,7 @@ const optional = (shape: Shape): Shape => (v, p) => { if (v !== undefined) shape
 const nullable = (shape: Shape): Shape => (v, p) => { if (v !== null) shape(v, p); };
 const array = (shape: Shape): Shape => (v, p) => {
   if (!Array.isArray(v)) fail(p);
-  v.forEach((item, i) => shape(item, `${p}[${i}]`));
+  (v as unknown[]).forEach((item, i) => shape(item, `${p}[${i}]`));
 };
 const object = (fields: Record<string, Shape>): Shape => (v, p) => {
   if (!v || typeof v !== 'object' || Array.isArray(v)) fail(p);

@@ -44,3 +44,13 @@ const result = analyzeCharacter(snapshot, snapshot.characters[0]!, rule);
 - TypeScript 컴파일러 미설치로 정적 타입 검사는 미완료다. 개발 의존성 설치와 `tsc --noEmit` 구성을 다음 작업으로 남겼다.
 
 공식 진행 기록은 지정 Obsidian 프로젝트 폴더의 메인 노트와 연결된 상세 노트에 유지한다. 커밋과 원격 푸시는 수행하지 않았다.
+
+## 2026-11-03 환경 검증 갱신
+
+- 샌드박스 내부의 DNS 조회는 `액세스가 거부되었습니다`로 실패했다. npm 프록시 설정과 HTTP(S)_PROXY 등 프록시 환경 변수는 보이지 않았다.
+- 샌드박스 밖에서 `npm ping --fetch-retries=0 --fetch-timeout=10000`은 PONG(417ms)으로 성공했다. 경계 비교상 Codex 샌드박스의 네트워크 제한이 원인이며 시스템 전체 DNS 장애나 프록시 문제라는 증거는 없다. Windows CIM 자원 조회는 클라이언트 접근 제한으로 실패해 RAM 총량·여유를 확인하지 못했다. D: 여유 공간은 약 480GB다.
+- TypeScript 7.0.2와 `@types/node` 26.6.6을 개발 의존성으로 추가했다. `tsconfig.json` strict 검사 `npx tsc -p tsconfig.json` 통과.
+- `npm test`: 18개 통과, 실패 0개.
+- 테스트는 Node 22의 실험적 타입 제거 경고를 출력하지만 실행 성공이다.
+- `src/validation.ts` 배열 항목 타입을 명시해 strict 검사를 통과하도록 수정했다.
+- 앱 화면과 SQLite는 구현하지 않았다.
