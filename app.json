@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "명조 육성 관리",
+    "slug": "wuthering-growth-app",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.personal.wutheringgrowth"
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
+  }
+}
