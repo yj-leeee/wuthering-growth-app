@@ -4,12 +4,16 @@
     "slug": "wuthering-growth-app",
     "version": "0.2.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "android": {
       "package": "com.personal.wutheringgrowth"
     },
     "plugins": [
       "expo-sqlite"
-    ]
+    ],
+    "androidNavigationBar": {
+      "backgroundColor": "#0B0B0F",
+      "barStyle": "light-content"
+    }
   }
 }
