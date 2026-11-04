@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "source": { "method": "json", "observedAt": "2026-11-04T00:00:00Z", "gameVersion": "example-version", "reference": "입력 예시 — 실제 계정 아님" },
+  "completeness": "partial",
+  "characters": [ { "id": "example-character-1", "definitionId": "example-resonator", "level": { "value": 40, "confirmed": true }, "weaponId": "example-weapon-1", "skills": { "basic": { "value": 4, "confirmed": true }, "skill": { "value": null, "confirmed": false } }, "echoIds": [] } ],
+  "weapons": [ { "id": "example-weapon-1", "definitionId": "example-weapon", "level": { "value": 40, "confirmed": true } } ],
+  "echoes": []
+}

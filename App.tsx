@@ -6,12 +6,13 @@ import { analyzeCharacter } from './src/analysis';
 import type { AccountSnapshot, CharacterBuild, Observation, SkillId } from './src/model';
 import { sampleRecommendation, sampleSnapshot } from './src/sample';
 import { initializeStore, loadSnapshot } from './src/storage';
+import { DataManager } from './src/DataManager';
 
 const color = { bg: '#0B0B0F', card: '#1B1B24', surface: '#252530', line: '#353544', text: '#F5F5F7', muted: '#A5A5B5', purple: '#A77BFF', green: '#52D99A', red: '#FF8585', yellow: '#F4CD69' };
 const skills: Record<SkillId, string> = { basic: '일반 공격', skill: '공명 스킬', liberation: '공명 해방', forte: '공명 회로', intro: '변주 스킬' };
 const display = (v?: Observation) => v?.confirmed && v.value !== null ? String(v.value) : '미확인';
 const characterName = (c: CharacterBuild) => c.definitionId === 'example-resonator' ? '샘플 공명자' : c.definitionId;
-type Page = { name: 'list' } | { name: 'detail' | 'analysis'; id: string };
+type Page = { name: 'list' } | { name: 'manage' } | { name: 'detail' | 'analysis'; id: string };
 type Result = ReturnType<typeof analyzeCharacter>;
 function Button({ title, onPress, secondary = false }: { title: string; onPress: () => void; secondary?: boolean }) {
   return <Pressable accessibilityRole="button" onPress={onPress} style={[s.button, secondary && s.secondary]}><Text style={[s.buttonText, secondary && s.secondaryText]}>{title}</Text></Pressable>;
@@ -39,13 +40,15 @@ function Screens() {
   useEffect(() => { const sub = BackHandler.addEventListener('hardwareBackPress', () => { if (page.name === 'list') return false; back(); return true; }); return () => sub.remove(); }, [page]);
   if (error) return <View style={s.center}><Text style={s.body}>저장 데이터를 읽지 못했습니다. 원본 데이터는 보존됩니다.</Text><Button title="다시 불러오기" onPress={reload} /></View>;
   if (!data) return <View style={s.center}><ActivityIndicator color={color.purple} accessibilityLabel="저장 데이터 불러오는 중" /></View>;
+  if (page.name === 'manage') return <DataManager db={db} onBack={() => setPage({ name: 'list' })} onChanged={setData} />;
   const selected = page.name === 'list' ? undefined : data.characters.find(c => c.id === page.id);
   const analysis = (c: CharacterBuild) => c.definitionId === sampleRecommendation.characterDefinitionId ? analyzeCharacter(data, c, sampleRecommendation) : undefined;
   const result = selected ? analysis(selected) : undefined;
   return <ScrollView contentContainerStyle={s.container}>
     {page.name === 'list' ? <View><Text style={s.brand}>명조 육성 관리</Text><Text style={s.caption}>WUTHERING WAVES  ·  GROWTH TRACKER</Text></View> : <Pressable accessibilityRole="button" accessibilityLabel="뒤로" onPress={back} style={s.back}><Text style={s.backText}>‹</Text><Text style={s.heading}>{page.name === 'detail' ? '캐릭터 상세' : '육성 분석'}</Text></Pressable>}
-    <View style={s.notice}><Text style={s.noticeIcon}>ⓘ</Text><View style={s.flex}><Text style={s.noticeTitle}>샘플 데이터로 실행 중</Text><Text style={s.muted}>합성 데이터와 테스트용 목표입니다. 실제 게임의 공식 권장 기준이 아닙니다.</Text></View></View>
+    <View style={s.notice}><Text style={s.noticeIcon}>ⓘ</Text><View style={s.flex}><Text style={s.noticeTitle}>{data.source.method === 'sample' ? '샘플 데이터로 실행 중' : '사용자 데이터 사용 중'}</Text><Text style={s.muted}>육성 목표는 테스트용 예시이며 공식 권장 기준이 아닙니다.</Text></View></View>
     {page.name === 'list' ? <>
+      <Button title="데이터 관리 · JSON 가져오기" onPress={() => setPage({ name: 'manage' })} />
       <Text style={s.heading}>보유 캐릭터 <Text style={s.count}>({data.characters.length})</Text></Text>
       {data.characters.length === 0 && <Text style={s.muted}>보유 캐릭터가 없습니다.</Text>}
       {data.characters.map(c => <Pressable accessibilityRole="button" accessibilityLabel={`${characterName(c)} 상세 보기`} key={c.id} style={s.card} onPress={() => setPage({ name: 'detail', id: c.id })}>
