@@ -9,7 +9,7 @@ import { initializeStore, loadSnapshot } from './src/storage';
 import { DataManager } from './src/DataManager';
 import { GuidePanel } from './src/GuidePanel';
 import type { Guide } from './src/guide';
-import { combinedProgress, guideFindings } from './src/guideView';
+import { combinedProgress, echoSectionNotice, guideFindings } from './src/guideView';
 
 const color = { bg: '#0B0B0F', card: '#1B1B24', surface: '#252530', line: '#353544', text: '#F5F5F7', muted: '#A5A5B5', purple: '#A77BFF', green: '#52D99A', red: '#FF8585', yellow: '#F4CD69' };
 const skills: Record<SkillId, string> = { basic: '일반 공격', skill: '공명 스킬', liberation: '공명 해방', forte: '공명 회로', intro: '변주 스킬' };
@@ -74,6 +74,11 @@ function Screens() {
       <Button title={guideReady ? '육성 분석 보기  ›' : '가이드 확인 중…'} disabled={!guideReady} onPress={() => setPage({ name: 'analysis', id: selected.id })} />
     </> : <>
       <View style={[s.card, s.row]}><Portrait /><View style={s.flex}><Text style={s.title}>{characterName(selected)}</Text><Text style={s.muted}>Lv. {display(selected.level)}</Text></View></View>
+      <Text style={s.heading}>에코 · 스탯 분석{activeGuide ? ` · ${activeGuide.name}` : ''}</Text><View style={s.card}>
+        {echoSectionNotice(selected, activeGuide).map(message => <Text key={message} style={s.muted}>{message}</Text>)}
+        {(selected.echoIds ?? []).map(id => data.echoes.find(e => e.id === id)).filter(e => e !== undefined).map(e => <View style={s.finding} key={e.id}><Text style={s.body}>{e.definitionId} · COST {e.cost} · Lv. {display(e.level)}</Text><Text style={s.muted}>세트: {e.setId ?? '미확인'}</Text><Text style={s.muted}>주옵션: {e.mainStats.length ? e.mainStats.map(st => `${st.key} ${display(st.value)}${st.unit === 'percent' ? '%' : ''}`).join(' · ') : '미확인'}</Text><Text style={s.muted}>부옵션: {e.subStats.length ? e.subStats.map(st => `${st.key} ${display(st.value)}${st.unit === 'percent' ? '%' : ''}`).join(' · ') : '미확인'}</Text></View>)}
+        {activeGuide && <><Text style={s.caption}>출처 유형: {activeGuide.origin === 'sample' ? '합성 테스트' : activeGuide.origin === 'official-community' ? '공식 서비스 이용자 기여' : activeGuide.origin === 'developer' ? '개발사 제공' : '이용자 기여'}</Text>{extra.map((f, i) => <View style={s.finding} key={`${i}-${f.label}`}><View style={s.between}><Text style={[s.body, s.flex]}>{f.label}</Text><Text style={[s.status, {color: f.status === 'met' ? color.green : f.status === 'deficit' ? color.red : color.yellow}]}>{f.status === 'met' ? '충족' : f.status === 'deficit' ? '부족' : f.status === 'unknown' ? '미확인' : '기준 없음'}</Text></View><Text style={s.muted}>{f.detail}</Text>{f.priority !== undefined && <Text style={s.caption}>가이드 명시 우선순위: {f.priority}</Text>}</View>)}{!extra.length && <Text style={s.muted}>비교할 에코·스탯 기준이 없습니다.</Text>}</>}
+      </View>
       {!result && !activeGuide ? <Text style={s.muted}>이 캐릭터의 비교 기준이 없습니다.</Text> : <>
         <Text style={s.heading}>분석 결과</Text>{result && <View style={s.card}><Text style={s.body}>기본 육성은 테스트 기준으로 비교합니다.</Text><Progress result={result} /></View>}
         <Text style={s.heading}>전체 확인 항목</Text><View style={s.card}><Text style={s.body}>기본 레벨 비교와 선택 가이드의 에코·스탯 비교를 합산합니다.</Text><Text style={s.value}>{total.percent === null ? '미확인' : `${total.percent}%`}</Text><Text style={s.muted}>충족 {total.met} · 부족 {total.deficit} · 미확인 {total.unknown} · 기준 없음 {total.noCriterion}</Text><Text style={s.caption}>미확인과 기준 없음은 분모에서 제외합니다. 서로 다른 영역의 항목을 각각 한 번 계산합니다.</Text></View>
@@ -82,7 +87,6 @@ function Screens() {
           <View style={s.between}><Text style={[s.body, s.flex]}>{f.ruleId === 'character.level' ? '캐릭터 레벨' : f.ruleId === 'weapon.level' ? '무기 레벨' : skills[f.ruleId.replace('skill.', '') as SkillId] ?? f.ruleId}</Text><Text style={[s.status, { color: f.status === 'met' ? color.green : f.status === 'deficit' ? color.red : color.yellow }]}>{f.status === 'met' ? '충족' : f.status === 'deficit' ? '부족' : '미확인'}</Text></View>
           <Text style={s.muted}>현재 {f.current ?? '미확인'} / 예시 목표 {f.target}</Text><Text style={s.caption}>{f.reason}</Text>
         </View>)}</View></>}
-        {activeGuide && <><Text style={s.heading}>에코 · 스탯 분석 · {activeGuide.name}</Text><View style={s.card}><Text style={s.caption}>출처 유형: {activeGuide.origin === 'sample' ? '합성 테스트' : activeGuide.origin === 'official-community' ? '공식 서비스 이용자 기여' : activeGuide.origin === 'developer' ? '개발사 제공' : '이용자 기여'}</Text>{extra.map((f, i) => <View style={s.finding} key={`${i}-${f.label}`}><View style={s.between}><Text style={[s.body, s.flex]}>{f.label}</Text><Text style={[s.status, {color: f.status === 'met' ? color.green : f.status === 'deficit' ? color.red : color.yellow}]}>{f.status === 'met' ? '충족' : f.status === 'deficit' ? '부족' : f.status === 'unknown' ? '미확인' : '기준 없음'}</Text></View><Text style={s.muted}>{f.detail}</Text>{f.priority !== undefined && <Text style={s.caption}>가이드 명시 우선순위: {f.priority}</Text>}</View>)}{!extra.length && <Text style={s.muted}>비교할 에코·스탯 기준이 없습니다.</Text>}</View></>}
       </>}
     </>}
   </ScrollView>;

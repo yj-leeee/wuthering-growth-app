@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "source": { "method": "json", "observedAt": "2026-11-06T00:00:00Z", "gameVersion": "fixture-v1", "reference": "에코 분석 합성 테스트 — 실제 계정 아님" },
+  "completeness": "partial",
+  "characters": [{ "id": "echo-test-character", "definitionId": "example-resonator", "level": { "value": 60, "confirmed": true }, "skills": { "basic": { "value": 6, "confirmed": true } }, "weaponId": "echo-test-weapon", "echoIds": ["echo-test-4", "echo-test-3"], "echoesComplete": true, "stats": [{ "key": "example-attack", "unit": "flat", "value": { "value": 1200, "confirmed": true } }] }],
+  "weapons": [{ "id": "echo-test-weapon", "definitionId": "example-weapon", "level": { "value": 70, "confirmed": true } }],
+  "echoes": [
+    { "id": "echo-test-4", "definitionId": "합성 에코 A", "setId": "example-set", "cost": 4, "level": { "value": 10, "confirmed": true }, "mainStats": [{ "key": "example-crit", "unit": "percent", "value": { "value": 12, "confirmed": true } }], "mainStatsComplete": true, "subStats": [{ "key": "example-crit", "unit": "percent", "value": { "value": 3, "confirmed": true } }], "subStatsComplete": true },
+    { "id": "echo-test-3", "definitionId": "합성 에코 B", "setId": "example-set", "cost": 3, "level": { "value": 5, "confirmed": true }, "mainStats": [{ "key": "example-other", "unit": "flat", "value": { "value": 80, "confirmed": true } }], "mainStatsComplete": true, "subStats": [], "subStatsComplete": false }
+  ]
+}
