@@ -32,9 +32,9 @@ test('SQLite persists edits across close/reopen and does not duplicate seed', as
 test('future database version is refused without deleting data', async () => {
   const db = new DatabaseSync(':memory:');
   try {
-    db.exec('PRAGMA user_version = 3');
+    db.exec('PRAGMA user_version = 4');
     await assert.rejects(initializeStore(adapter(db), sampleSnapshot));
-    assert.equal((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version, 3);
+    assert.equal((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version, 4);
   } finally { db.close(); }
 });
 test('invalid save leaves previous data intact; corrupt load fails', async () => {
@@ -59,7 +59,7 @@ test('version 1 migrates existing data and retains its active choice', async () 
     const entries = await listSnapshots(adapter(db));
     assert.equal(entries.length, 1); assert.equal(entries[0]!.active, true);
     assert.deepEqual(entries[0]!.data, original);
-    assert.equal((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version, 2);
+    assert.equal((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version, 3);
   } finally { db.close(); }
 });
 test('normalized duplicates do not create or activate a new snapshot', async () => {

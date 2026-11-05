@@ -26,6 +26,9 @@ export type EchoInstance = {
   level: Observation;
   mainStats: Stat[];
   subStats: Stat[];
+  /** Omitted in older snapshots: whether the entire displayed list was observed is unknown. */
+  mainStatsComplete?: boolean;
+  subStatsComplete?: boolean;
 };
 export type CharacterBuild = {
   id: string;
@@ -35,6 +38,9 @@ export type CharacterBuild = {
   /** undefined: unknown; null: confirmed unequipped. */
   weaponId?: string | null;
   echoIds?: string[];
+  /** Whether all equipped slots have been observed. */
+  echoesComplete?: boolean;
+  stats?: Stat[];
 };
 export type AccountSnapshot = {
   schemaVersion: 1;

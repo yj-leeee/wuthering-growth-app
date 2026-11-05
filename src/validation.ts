@@ -34,10 +34,10 @@ const snapshotShape = object({
   source: object({ method: choice('sample', 'manual', 'json', 'ocr', 'official-api'), observedAt: timestamp, gameVersion: text, reference: text }),
   completeness: choice('partial', 'complete'),
   characters: array(object({ id: text, definitionId: text, level: observation(1), skills: skills(observation(1)),
-    weaponId: optional(nullable(text)), echoIds: optional(array(text)) })),
+    weaponId: optional(nullable(text)), echoIds: optional(array(text)), echoesComplete: optional(bool), stats: optional(array(stat)) })),
   weapons: array(object({ id: text, definitionId: text, level: observation(1) })),
   echoes: array(object({ id: text, definitionId: text, setId: nullable(text), cost: choice(1, 3, 4),
-    level: observation(0), mainStats: array(stat), subStats: array(stat) })),
+    level: observation(0), mainStats: array(stat), subStats: array(stat), mainStatsComplete: optional(bool), subStatsComplete: optional(bool) })),
 });
 
 /** Strict validation rejects unexpected fields rather than retaining arbitrary private data. */

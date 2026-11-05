@@ -1,5 +1,7 @@
 import type { AccountSnapshot } from './model.ts';
 import { parseSnapshot, validateSnapshot } from './validation.ts';
+import { validateGuide } from './guide.ts';
+import type { Guide } from './guide.ts';
 
 export interface Database {
   execAsync(sql: string): Promise<void>;
@@ -20,7 +22,7 @@ export async function initializeStore(db: Database, sample: AccountSnapshot) {
   try {
     const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
     const version = row?.user_version ?? 0;
-    if (version > 2) throw new Error('더 새로운 앱에서 만든 저장소입니다. 앱 업데이트가 필요합니다.');
+    if (version > 3) throw new Error('더 새로운 앱에서 만든 저장소입니다. 앱 업데이트가 필요합니다.');
     if (version === 0) await db.execAsync('CREATE TABLE snapshots (id INTEGER PRIMARY KEY CHECK(id = 1), payload TEXT NOT NULL)');
     const payload = JSON.stringify(validateSnapshot(sample));
     await db.runAsync('INSERT OR IGNORE INTO snapshots (id, payload) VALUES (1, ?)', payload);
@@ -31,8 +33,41 @@ export async function initializeStore(db: Database, sample: AccountSnapshot) {
       await db.runAsync('INSERT INTO snapshot_archive (payload, created_at) VALUES (?, ?)', normalizeSnapshot(parseSnapshot(existing.payload)), new Date().toISOString());
       await db.execAsync('INSERT INTO snapshot_selection (id, snapshot_id) SELECT 1, id FROM snapshot_archive LIMIT 1; PRAGMA user_version = 2;');
     }
+    if (version < 3) {
+      await db.execAsync('CREATE TABLE guides (id TEXT PRIMARY KEY NOT NULL, character_id TEXT NOT NULL, payload TEXT NOT NULL); CREATE TABLE guide_selection (character_id TEXT PRIMARY KEY NOT NULL, guide_id TEXT NOT NULL, FOREIGN KEY(guide_id) REFERENCES guides(id)); PRAGMA user_version = 3;');
+    }
     await db.execAsync('COMMIT');
   } catch (error) { await db.execAsync('ROLLBACK'); throw error; }
+}
+/** IDs are immutable: a different guide with the same ID must receive a new ID. */
+export async function saveGuide(db: Database, input: unknown): Promise<'saved' | 'duplicate'> {
+  const guide = validateGuide(input);
+  const payload = canonical(guide);
+  await db.execAsync('BEGIN IMMEDIATE');
+  try {
+    const row = await db.getFirstAsync<{ payload: string }>('SELECT payload FROM guides WHERE id = ?', guide.id);
+    if (row && row.payload !== payload) throw new Error('같은 ID의 다른 가이드가 있습니다. 새 ID를 사용해 주세요.');
+    if (!row) await db.runAsync('INSERT INTO guides (id, character_id, payload) VALUES (?, ?, ?)', guide.id, guide.characterDefinitionId, payload);
+    await db.execAsync('COMMIT');
+    return row ? 'duplicate' : 'saved';
+  } catch (error) { await db.execAsync('ROLLBACK'); throw error; }
+}
+export async function listGuides(db: Database, characterId: string): Promise<Guide[]> {
+  const rows = await db.getAllAsync<{ payload: string }>('SELECT payload FROM guides WHERE character_id = ? ORDER BY id', characterId);
+  return rows.map(row => validateGuide(JSON.parse(row.payload)));
+}
+export async function selectGuide(db: Database, characterId: string, guideId: string) {
+  await db.execAsync('BEGIN IMMEDIATE');
+  try {
+    const row = await db.getFirstAsync<{ payload: string }>('SELECT payload FROM guides WHERE id = ? AND character_id = ?', guideId, characterId);
+    if (!row || validateGuide(JSON.parse(row.payload)).characterDefinitionId !== characterId) throw new Error('해당 캐릭터의 가이드를 찾을 수 없습니다.');
+    await db.runAsync('INSERT INTO guide_selection (character_id, guide_id) VALUES (?, ?) ON CONFLICT(character_id) DO UPDATE SET guide_id = excluded.guide_id', characterId, guideId);
+    await db.execAsync('COMMIT');
+  } catch (error) { await db.execAsync('ROLLBACK'); throw error; }
+}
+export async function loadSelectedGuide(db: Database, characterId: string): Promise<Guide | null> {
+  const row = await db.getFirstAsync<{ payload: string }>('SELECT g.payload FROM guides g JOIN guide_selection s ON s.guide_id = g.id AND s.character_id = g.character_id WHERE s.character_id = ?', characterId);
+  return row ? validateGuide(JSON.parse(row.payload)) : null;
 }
 export async function loadSnapshot(db: Database): Promise<AccountSnapshot> {
   const row = await db.getFirstAsync<{ payload: string }>('SELECT payload FROM snapshots WHERE id = 1');
